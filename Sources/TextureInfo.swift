@@ -121,10 +121,10 @@ public class TextureInfo {
         self.materialName = aiMaterial.pointee.name
         
         self.checkTextureType(for: aiMaterial,
-                              with: aiTextureType,
-                              in: aiScene,
-                              atPath: path,
-                              imageCache: imageCache)
+                                 with: aiTextureType,
+                                 in: aiScene,
+                                 atPath: path,
+                                 imageCache: imageCache)
     }
     
     
@@ -148,76 +148,90 @@ public class TextureInfo {
                                                   aiTextureType)
         debugPrint("has textures: \(nTextures)")
         debugPrint("has embedded textures: \(aiScene.mNumTextures)")
+        
         if nTextures == 0 && aiScene.mNumTextures == 0 {
             self.applyColor = true
             self.extractColor(for: aiMaterial,
-                              with: aiTextureType)
-        } else {
-            if nTextures == 0 {
-                self.applyColor = true
-                self.extractColor(for: aiMaterial,
-                                  with: aiTextureType)
-            } else {
-                var aiPath = aiString()
-                aiGetMaterialTexture(aiMaterial,
-                                     aiTextureType,
-                                     UInt32(0),
-                                     &aiPath,
-                                     nil,
-                                     nil,
-                                     nil,
-                                     nil,
-                                     nil,
-                                     nil)
-                // Fix file path
-                var texFilePath = aiPath.stringValue() as NSString
-                texFilePath = texFilePath.replacingOccurrences(of: "\\\\",
-                                                               with: "/") as NSString
-                texFilePath = texFilePath.replacingOccurrences(of: "\\",
-                                                               with: "/") as NSString
-                
-                let texFileName = texFilePath.lastPathComponent
-                if texFileName == "" {
-                    self.applyColor = true
-                    self.extractColor(for: aiMaterial,
-                                      with: aiTextureType)
-                } else if texFileName.count > 0  && aiScene.mNumTextures > 0 {
-                    self.applyEmbeddedTexture = true
-                    if (texFileName.hasPrefix("*")) {
-                        if let embeddedTextureIndex = Int((texFilePath.substring(from: 1))) {
-                            self.embeddedTextureIndex = embeddedTextureIndex
-                        }
-                    }
-                    if let embeddedTextureIndex = self.embeddedTextureIndex {
-                        if embeddedTextureIndex >= Int(aiScene.mNumTextures) {
-                            debugPrint("ERROR: Embedded texture index: \(embeddedTextureIndex) is out of bounds (0..\((aiScene.mNumTextures - 1))")
-                            self.embeddedTextureIndex = Int(aiScene.mNumTextures) - 1;
-                        }
-                        debugPrint("Embedded texture index: \(embeddedTextureIndex)")
-                        if let cachedImage = imageCache.cachedFileAtPath(path: texFilePath as String) {
-                            self.image = cachedImage
-                        } else {
-                            self.generateCGImageForEmbeddedTexture(at: embeddedTextureIndex,
-                                                                   in: aiScene)
-                            if let image = self.image {
-                                imageCache.storeImage(image: image,
-                                                      toPath: texFilePath as String)
-                            }
-                        }
-                    }
+                                 with: aiTextureType)
+            return
+        }
+        
+        if nTextures == 0 {
+            self.applyColor = true
+            self.extractColor(for: aiMaterial,
+                                 with: aiTextureType)
+            return
+        }
+        
+        var aiPath = aiString()
+        aiGetMaterialTexture(aiMaterial,
+                             aiTextureType,
+                             UInt32(0),
+                             &aiPath,
+                             nil,
+                             nil,
+                             nil,
+                             nil,
+                             nil,
+                             nil)
+        // Fix file path
+        var texFilePath = aiPath.stringValue() as NSString
+        texFilePath = texFilePath.replacingOccurrences(of: "\\\\",
+                                                       with: "/") as NSString
+        texFilePath = texFilePath.replacingOccurrences(of: "\\",
+                                                       with: "/") as NSString
+        
+        let texFileName = texFilePath.lastPathComponent
+        if texFileName.isEmpty {
+            self.applyColor = true
+            self.extractColor(for: aiMaterial,
+                                 with: aiTextureType)
+            return
+        }
+        
+        if aiScene.mNumTextures > 0 {
+            self.applyEmbeddedTexture = true
+            if (texFileName.hasPrefix("*")) {
+                if let embeddedTextureIndex = Int((texFilePath.substring(from: 1))) {
+                    self.embeddedTextureIndex = embeddedTextureIndex
+                }
+            }
+            if let embeddedTextureIndex = self.embeddedTextureIndex {
+                if embeddedTextureIndex >= Int(aiScene.mNumTextures) {
+                    debugPrint("ERROR: Embedded texture index: \(embeddedTextureIndex) is out of bounds (0..\((aiScene.mNumTextures - 1))")
+                    self.embeddedTextureIndex = Int(aiScene.mNumTextures) - 1;
+                }
+                debugPrint("Embedded texture index: \(embeddedTextureIndex)")
+                if let cachedImage = imageCache.cachedFileAtPath(path: texFilePath as String) {
+                    self.image = cachedImage
                 } else {
-                    self.applyExternalTexture = true
-                    debugPrint("tex file name is \(String(describing: texFileName))")
-                    let sceneDir = ((path as NSString).deletingLastPathComponent).appending("/")
-                    self.externalTexturePath = sceneDir.appending(texFileName)
-                    if let externalTexturePath = self.externalTexturePath {
-                        debugPrint("tex path is \(externalTexturePath)")
-                        self.generateCGImageForExternalTexture(atPath: externalTexturePath,
-                                                               imageCache: imageCache)
+                    self.generateCGImageForEmbeddedTexture(at: embeddedTextureIndex,
+                                                           in: aiScene)
+                    if let image = self.image {
+                        imageCache.storeImage(image: image,
+                                              toPath: texFilePath as String)
                     }
                 }
             }
+            return
         }
+        
+        self.applyExternalTexture = true
+        debugPrint("tex file name is \(String(describing: texFileName))")
+        let sceneDir = ((path as NSString).deletingLastPathComponent).appending("/")
+        self.externalTexturePath = sceneDir.appending(texFileName)
+        if let externalTexturePath = self.externalTexturePath {
+            debugPrint("tex path is \(externalTexturePath)")
+            self.generateCGImageForExternalTexture(atPath: externalTexturePath,
+                                                   imageCache: imageCache)
+        }
+        
+        if image == nil {
+            self.applyColor = true
+            self.extractColor(for: aiMaterial,
+                                 with: aiTextureType)
+        }
+        
     }
     
     // MARK: - Generate textures
@@ -291,7 +305,7 @@ public class TextureInfo {
     // MARK: - Extract color
     
     func extractColor(for aiMaterial: UnsafeMutablePointer<aiMaterial>,
-                                      with aiTextureType: aiTextureType) {
+                      with aiTextureType: aiTextureType) {
         debugPrint("Extracting color")
         var color = aiColor4D()
         color.r = 0.0
@@ -347,8 +361,8 @@ public class TextureInfo {
                                          CGFloat(color.b),
                                          CGFloat(color.a)]
             if let colorSpace = self.colorSpace,
-                let cgColor = CGColor(colorSpace: colorSpace,
-                                      components: components) {
+               let cgColor = CGColor(colorSpace: colorSpace,
+                                     components: components) {
                 self.color = Color(cgColor: cgColor)
             }
         }
@@ -377,4 +391,3 @@ public class TextureInfo {
     }
     
 }
-
