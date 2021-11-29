@@ -10,7 +10,7 @@ import SceneKit
 import Assimp
 
 extension SCNMaterial {
-    
+
     @available(OSX 10.12, iOS 9.0, *)
     func loadBlendModeProperty(from aiMaterial: UnsafePointer<aiMaterial>) {
         debugPrint("Loading blend mode")
@@ -31,7 +31,7 @@ extension SCNMaterial {
             self.blendMode = .add
         }
     }
-    
+
     func loadCullModeProperty(from aiMaterial: UnsafePointer<aiMaterial>) {
         debugPrint("Loading cull/double sided mode")
         var cullModeRawValue: Int32 = .zero
@@ -48,7 +48,7 @@ extension SCNMaterial {
             self.cullMode = .back
         }
     }
-    
+
     func loadLightingModelProperty(from aiMaterial: UnsafePointer<aiMaterial>) {
         debugPrint("Loading lighting model")
         /**
@@ -65,7 +65,7 @@ extension SCNMaterial {
                                   AI_MATKEY_SHADING_MODEL.index,
                                   &lightingModelRawValue,
                                   &max)
-        
+
         if lightingModelRawValue == Int32(aiShadingMode_Blinn.rawValue) {
             self.lightingModel = .blinn
         }
@@ -75,9 +75,9 @@ extension SCNMaterial {
         if lightingModelRawValue == Int32(aiShadingMode_Phong.rawValue) {
             self.lightingModel = .phong
         }
-        
+
     }
-    
+
     /// Updates a scenekit material's multiply property
     ///
     /// - Parameter aiMaterial: The assimp material
@@ -104,7 +104,7 @@ extension SCNMaterial {
             }
         }
     }
-    
+
     func loadShininessProperty(from aiMaterial: UnsafePointer<aiMaterial>) {
         debugPrint("Loading shininess")
         var shininessRawValue: Int32 = .zero
@@ -118,7 +118,7 @@ extension SCNMaterial {
         debugPrint("shininess: \(shininessRawValue)")
         self.shininess = CGFloat(shininessRawValue)
     }
-    
+
     func loadContentsProperties(from aiMaterial: UnsafeMutablePointer<aiMaterial>,
                                 aiScene: aiScene,
                                 path: String,
@@ -153,7 +153,7 @@ extension SCNMaterial {
             self.makePropertyContents(with: textureInfo)
         }
     }
-    
+
     /// Updates a scenekit material property with the texture file path or the color
     /// if no texture is specifed.
     ///
@@ -192,7 +192,11 @@ extension SCNMaterial {
             self.reflective.mappingChannel = 0
             self.reflective.wrapS = .repeat
             self.reflective.wrapT = .repeat
-            self.reflective.intensity = 1
+            if let reflectivity = textureInfo.getMaterialReflectivity() {
+                self.reflective.intensity = reflectivity
+            } else {
+                self.reflective.intensity = 1
+            }
             self.reflective.mipFilter = .linear
             self.reflective.magnificationFilter = .linear
             self.reflective.minificationFilter = .linear
@@ -257,7 +261,7 @@ extension SCNMaterial {
         default:
             break
         }
-        
+
     }
-    
+
 }
