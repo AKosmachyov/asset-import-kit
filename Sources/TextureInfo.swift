@@ -194,11 +194,14 @@ public class TextureInfo {
 
         if aiScene.mNumTextures > 0 {
             self.applyEmbeddedTexture = true
-            if (texFileName.hasPrefix("*")) {
-                if let embeddedTextureIndex = Int((texFilePath.substring(from: 1))) {
-                    self.embeddedTextureIndex = embeddedTextureIndex
+            for i in (0..<aiScene.mNumTextures) {
+                if((aiScene.mTextures[Int(i)]?.pointee.mFilename.stringValue().contains(texFileName))
+                    == true) {
+                    self.embeddedTextureIndex = Int(i)
+                    break
                 }
             }
+
             if let embeddedTextureIndex = self.embeddedTextureIndex {
                 if embeddedTextureIndex >= Int(aiScene.mNumTextures) {
                     debugPrint("ERROR: Embedded texture index: \(embeddedTextureIndex) is out of bounds (0..\((aiScene.mNumTextures - 1))")
@@ -255,15 +258,13 @@ public class TextureInfo {
                                    length: Int(mWidth))
             self.imageDataProvider = CGDataProvider(data: imageData)
             let format = tupleOfInt8sToString(aiTexture.achFormatHint)
-            if format == "png" {
-                debugPrint("Created png embedded texture")
+            if format.contains("png") {
                 self.image = CGImage(pngDataProviderSource: self.imageDataProvider!,
                                      decode: nil,
                                      shouldInterpolate: true,
                                      intent: .defaultIntent)
             }
-            if format == "jpg" {
-                debugPrint("Created jpg embedded texture")
+            if format.contains("jpg") {
                 self.image = CGImage(jpegDataProviderSource: self.imageDataProvider!,
                                      decode: nil,
                                      shouldInterpolate: true,
