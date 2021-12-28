@@ -13,7 +13,8 @@ func tupleOfInt8sToString( _ tupleOfInt8s: Any) -> NSString {
     let mirror = Mirror(reflecting: tupleOfInt8s)
     for child in mirror.children {
         if let characterValue = child.value as? Int8,
-            characterValue != 0 {
+            characterValue != 0,
+            characterValue != -128 {
             result.append(Character(UnicodeScalar(UInt8(abs(characterValue)))))
         }
     }
