@@ -43,8 +43,9 @@ public class AssetImporter {
     ///     - postProcessSteps: The flags for all possible post processing steps.
     /// - Throws: A new scene object, or scene loading error.
     public func importScene(filePath: String,
-                            postProcessSteps: PostProcessSteps) throws -> AssetImporterScene {
-        
+                            postProcessSteps: PostProcessSteps,
+                            factor: inout Double?) throws -> AssetImporterScene {
+
         /// Start the import on the given file with some example postprocessing
         /// Usually - if speed is not the most important aspect for you - you'll t
         /// probably to request more postprocessing than we do in this example.
@@ -61,6 +62,7 @@ public class AssetImporter {
         }
         /// Access the aiScene instance referenced by aiScenePointer.
         var aiScene = aiScenePointer.pointee
+        factor = aiScene.getUnitScaleFactor()
         /// Now we can access the file's contents.
         let scnScene = self.makeSCNScene(fromAssimpScene: aiScene,
                                          at: filePath)
@@ -69,9 +71,9 @@ public class AssetImporter {
         /// Retutrn result
         return scnScene
     }
-    
+
     // MARK: - Make scenekit scene
-    
+
     /// Make SceneKit scene
     ///
     /// Creates a SceneKit scene from the scene representing the file at a given path.
@@ -115,12 +117,12 @@ public class AssetImporter {
          */
         assetImporterScene.makeModelScene()
         assetImporterScene.makeAnimationScenes()
-        
+
         return assetImporterScene
     }
-    
+
     // MARK: - Make scenekit node
-    
+
     /// Make a SceneKit node
     ///
     /// Creates a new SceneKit node from the assimp scene node.
@@ -134,7 +136,7 @@ public class AssetImporter {
                      in aiScene: aiScene,
                      atPath path: String,
                      imageCache: AssimpImageCache) -> SCNNode {
-        
+
         let node = SCNNode()
         /*
          ---------------------------------------------------------------------

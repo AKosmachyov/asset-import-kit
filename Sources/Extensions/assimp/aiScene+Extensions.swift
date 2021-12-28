@@ -35,5 +35,24 @@ extension aiScene {
         return aiSceneCameras
     }
     
-}
 
+    /// Get the unit scale factor from the .fbx model
+    ///
+    /// - Returns: The unit scale factor property.
+    func getUnitScaleFactor() -> Double? {
+        guard let metadata = mMetaData?.pointee else { return nil }
+        let keys = metadata.mKeys
+        let values = metadata.mValues
+        for i in (0..<metadata.mNumProperties) {
+            let key = keys?[Int(i)].stringValue()
+            if let valueRaw = values?[Int(i)] {
+                let valueType = valueRaw.mType
+                if key == "UnitScaleFactor",
+                   valueType == AI_DOUBLE {
+                    return valueRaw.mData.load(as: Double.self)
+                }
+            }
+        }
+        return nil
+    }
+}

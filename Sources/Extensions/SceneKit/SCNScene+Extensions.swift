@@ -41,11 +41,13 @@ public extension SCNScene {
     /// - Returns: A new scene object, or nil if no scene could be loaded.
     /// - Throws: Scene loading error.
     static func assimpScene(filePath: String,
-                            postProcessSteps: PostProcessSteps) throws -> AssetImporterScene {
+                            postProcessSteps: PostProcessSteps,
+                            factor: inout Double?) throws -> AssetImporterScene {
         return try AssetImporter().importScene(filePath: filePath,
-                                               postProcessSteps: postProcessSteps)
+                                               postProcessSteps: postProcessSteps,
+                                               factor: &factor)
     }
-    
+
     /// Loads a scene from the specified NSString URL.
     ///
     /// - Parameters:
@@ -54,11 +56,13 @@ public extension SCNScene {
     /// - Returns: A new scene object, or nil if no scene could be loaded.
     /// - Throws: Scene loading error.
     static func assimpScene(with url: URL,
-                            postProcessSteps: PostProcessSteps) throws -> AssetImporterScene {
+                            postProcessSteps: PostProcessSteps,
+                            factor: inout Double?) throws -> AssetImporterScene {
         return try AssetImporter().importScene(filePath: url.path,
-                                               postProcessSteps: postProcessSteps)
+                                               postProcessSteps: postProcessSteps,
+                                               factor: &factor)
     }
-    
+
     /// Creates an array of scenekit bone nodes for the specified bone names.
     ///
     /// - Parameter boneNames: The array of bone names.
@@ -73,6 +77,5 @@ public extension SCNScene {
         }
         return boneNodes
     }
-    
 }
 
