@@ -44,7 +44,7 @@ public class AssetImporter {
     /// - Throws: A new scene object, or scene loading error.
     public func importScene(filePath: String,
                             postProcessSteps: PostProcessSteps) throws -> AssetImporterScene {
-        
+
         /// Start the import on the given file with some example postprocessing
         /// Usually - if speed is not the most important aspect for you - you'll t
         /// probably to request more postprocessing than we do in this example.
@@ -61,6 +61,19 @@ public class AssetImporter {
         }
         /// Access the aiScene instance referenced by aiScenePointer.
         var aiScene = aiScenePointer.pointee
+
+        /// While parsing exported models(.fbx) with Assimp, the model node appears with a scale of 100.
+        /// https://digitalrune.github.io/DigitalRune-Documentation/html/6f749972-9cb2-4274-b283-c327ba45e379.htm#Import
+        /// The UnitScaleFactor property is equal to 1. We correct the scale, so that models are displayed correctly:
+        /// https://github.com/assimp/assimp/issues/775#issue-129791271
+
+        if let unitScaleFactor = aiScene.getUnitScaleFactor() {
+            let unitSize = unitScaleFactor / 100
+            aiScene.mRootNode.pointee.mTransformation = aiMatrix4x4(a1: ai_real(unitSize), a2: 0, a3: 0, a4:0,
+                                           b1: 0, b2: ai_real(unitSize), b3: 0, b4: 0,
+                                           c1: 0, c2: 0, c3: ai_real(unitSize), c4: 0,
+                                           d1: 0, d2: 0, d3: 0, d4: 1)
+        }
         /// Now we can access the file's contents.
         let scnScene = self.makeSCNScene(fromAssimpScene: aiScene,
                                          at: filePath)
@@ -69,9 +82,9 @@ public class AssetImporter {
         /// Retutrn result
         return scnScene
     }
-    
+
     // MARK: - Make scenekit scene
-    
+
     /// Make SceneKit scene
     ///
     /// Creates a SceneKit scene from the scene representing the file at a given path.
@@ -115,12 +128,12 @@ public class AssetImporter {
          */
         assetImporterScene.makeModelScene()
         assetImporterScene.makeAnimationScenes()
-        
+
         return assetImporterScene
     }
-    
+
     // MARK: - Make scenekit node
-    
+
     /// Make a SceneKit node
     ///
     /// Creates a new SceneKit node from the assimp scene node.
@@ -134,7 +147,7 @@ public class AssetImporter {
                      in aiScene: aiScene,
                      atPath path: String,
                      imageCache: AssimpImageCache) -> SCNNode {
-        
+
         let node = SCNNode()
         /*
          ---------------------------------------------------------------------

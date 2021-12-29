@@ -45,7 +45,7 @@ public extension SCNScene {
         return try AssetImporter().importScene(filePath: filePath,
                                                postProcessSteps: postProcessSteps)
     }
-    
+
     /// Loads a scene from the specified NSString URL.
     ///
     /// - Parameters:
@@ -58,7 +58,7 @@ public extension SCNScene {
         return try AssetImporter().importScene(filePath: url.path,
                                                postProcessSteps: postProcessSteps)
     }
-    
+
     /// Creates an array of scenekit bone nodes for the specified bone names.
     ///
     /// - Parameter boneNames: The array of bone names.
@@ -73,6 +73,5 @@ public extension SCNScene {
         }
         return boneNodes
     }
-    
 }
 
