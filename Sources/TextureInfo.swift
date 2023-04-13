@@ -18,19 +18,19 @@ import AppKit
 #endif
 
 public class TextureInfo {
-
+    
     // MARK: - Texture metadata
-
+    
     /// The texture type: diffuse, specular etc.
     var textureType: aiTextureType?
-
+    
     // MARK: - Texture material
-
+    
     /// The material name which is the owner of this texture.
     var materialName: String = ""
-
+    
     // MARK: - Texture color and resources
-
+    
     /// A Boolean value that determines whether a color is applied to a material
     /// property.
     var applyColor: Bool = false {
@@ -41,19 +41,19 @@ public class TextureInfo {
             }
         }
     }
-
+    
     /// The actual color to be applied to a material property.
     var color: Color?
-
+    
     /// A profile that specifies the interpretation of a color to be applied to
     /// a material property.
     var colorSpace: CGColorSpace?
-
+    
     /// The actual reflectivity to be applied to material property.
     var reflectivity: CGFloat?
-
+    
     // MARK: - Embedded texture
-
+    
     /// A Boolean value that determines if embedded texture is applied to a
     // material property.
     var applyEmbeddedTexture: Bool = false {
@@ -64,12 +64,12 @@ public class TextureInfo {
             }
         }
     }
-
+    
     /// The index of the embedded texture in the array of assimp scene textures.
     var embeddedTextureIndex: Int?
-
+    
     // MARK: - External texture
-
+    
     /// A Boolean value that determines if an external texture is applied to a
     /// material property.
     var applyExternalTexture: Bool = false {
@@ -80,26 +80,26 @@ public class TextureInfo {
             }
         }
     }
-
+    
     /// The path to the external texture resource on the disk.
     var externalTexturePath: String?
-
+    
     // MARK: - Texture image resources
-
+    
     /// An opaque type that represents the external texture image source.
     var imageSource: CGImageSource?
-
+    
     /// An abstraction for the raw image data of an embedded texture image source that
     /// eliminates the need to manage raw memory buffer.
     var imageDataProvider: CGDataProvider?
-
+    
     /// A bitmap image representing either an external or embedded texture applied to
     /// a material property.
     var image: CGImage?
-
-
+    
+    
     // MARK: - Creating a texture info
-
+    
     /// Create a texture metadata object for a material property.
     ///
     /// - Parameters:
@@ -113,26 +113,26 @@ public class TextureInfo {
          in aiScene: aiScene,
          at path: String,
          imageCache: AssimpImageCache) {
-
+        
         self.imageSource = nil
         self.imageDataProvider = nil
         self.image = nil
         self.colorSpace = nil
         self.color = nil
-
+        
         self.textureType = aiTextureType
         self.materialName = aiMaterial.pointee.name
-
+        
         self.checkTextureType(for: aiMaterial,
-                                 with: aiTextureType,
-                                 in: aiScene,
-                                 atPath: path,
-                                 imageCache: imageCache)
+                              with: aiTextureType,
+                              in: aiScene,
+                              atPath: path,
+                              imageCache: imageCache)
     }
-
-
+    
+    
     // MARK: - Inspect texture metadata
-
+    
     /// Inspects the material texture properties to determine if color, embedded
     /// texture or external texture should be applied to the material property.
     ///
@@ -151,21 +151,21 @@ public class TextureInfo {
                                                   aiTextureType)
         debugPrint("has textures: \(nTextures)")
         debugPrint("has embedded textures: \(aiScene.mNumTextures)")
-
+        
         if nTextures == 0 && aiScene.mNumTextures == 0 {
             self.applyColor = true
             self.extractColor(for: aiMaterial,
-                                 with: aiTextureType)
+                              with: aiTextureType)
             return
         }
-
+        
         if nTextures == 0 {
             self.applyColor = true
             self.extractColor(for: aiMaterial,
-                                 with: aiTextureType)
+                              with: aiTextureType)
             return
         }
-
+        
         var aiPath = aiString()
         aiGetMaterialTexture(aiMaterial,
                              aiTextureType,
@@ -183,25 +183,31 @@ public class TextureInfo {
                                                        with: "/") as NSString
         texFilePath = texFilePath.replacingOccurrences(of: "\\",
                                                        with: "/") as NSString
-
+        
         let texFileName = texFilePath.lastPathComponent
         if texFileName.isEmpty {
             self.applyColor = true
             self.extractColor(for: aiMaterial,
-                                 with: aiTextureType)
+                              with: aiTextureType)
             return
         }
-
+        
         if aiScene.mNumTextures > 0 {
             self.applyEmbeddedTexture = true
+            
+            if texFileName.hasPrefix("*") {
+                self.embeddedTextureIndex = Int(texFilePath.substring(from: 1))
+            }
+            
             for i in (0..<aiScene.mNumTextures) {
-                if((aiScene.mTextures[Int(i)]?.pointee.mFilename.stringValue().contains(texFileName))
-                    == true) {
+                if let fileName = aiScene.mTextures[Int(i)]?.pointee.mFilename.stringValue(),
+                   fileName.contains(texFileName)
+                {
                     self.embeddedTextureIndex = Int(i)
                     break
                 }
             }
-
+            
             if let embeddedTextureIndex = self.embeddedTextureIndex {
                 if embeddedTextureIndex >= Int(aiScene.mNumTextures) {
                     debugPrint("ERROR: Embedded texture index: \(embeddedTextureIndex) is out of bounds (0..\((aiScene.mNumTextures - 1))")
@@ -221,7 +227,7 @@ public class TextureInfo {
             }
             return
         }
-
+        
         self.applyExternalTexture = true
         debugPrint("tex file name is \(String(describing: texFileName))")
         let sceneDir = ((path as NSString).deletingLastPathComponent).appending("/")
@@ -231,17 +237,17 @@ public class TextureInfo {
             self.generateCGImageForExternalTexture(atPath: externalTexturePath,
                                                    imageCache: imageCache)
         }
-
+        
         if image == nil {
             self.applyColor = true
             self.extractColor(for: aiMaterial,
-                                 with: aiTextureType)
+                              with: aiTextureType)
         }
-
+        
     }
-
+    
     // MARK: - Generate textures
-
+    
     /// Generates a bitmap image representing the embedded texture.
     ///
     /// - Parameters:
@@ -273,9 +279,9 @@ public class TextureInfo {
         } else {
             self.image = nil
         }
-
+        
     }
-
+    
     /// Generates a bitmap image representing the external texture.
     ///
     /// - Parameters:
@@ -304,10 +310,10 @@ public class TextureInfo {
                                   toPath: (path as String))
         }
     }
-
-
+    
+    
     // MARK: - Extract color
-
+    
     func extractColor(for aiMaterial: UnsafeMutablePointer<aiMaterial>,
                       with aiTextureType: aiTextureType) {
         debugPrint("Extracting color")
@@ -372,7 +378,7 @@ public class TextureInfo {
             }
         }
     }
-
+    
     func loadReflectivity(from aiMaterial: UnsafePointer<aiMaterial>) {
         debugPrint("Loading reflectivity")
         var reflectivity: Int32 = .zero
@@ -385,21 +391,21 @@ public class TextureInfo {
                                   &max)
         self.reflectivity = CGFloat(reflectivity)
     }
-
+    
     // MARK: - Texture resources
-
+    
     /// Returns the color or the bitmap image to be applied to the material property.
     ///
     /// - Returns: Returns either a color or a bitmap image.
     func getMaterialPropertyContents() -> Any? {
         return (self.applyEmbeddedTexture || self.applyExternalTexture) ? self.image : self.color
     }
-
+    
     /// - Returns: Returns a reflectivity of a color.
     func getMaterialReflectivity() -> CGFloat? {
         return (self.applyEmbeddedTexture || self.applyExternalTexture) ? nil : self.reflectivity
     }
-
+    
     /// Releases the graphics resources used to generate color or bitmap image to be
     /// applied to a material property.
     ///
@@ -411,5 +417,5 @@ public class TextureInfo {
         self.colorSpace = nil
         self.color = nil
     }
-
+    
 }
