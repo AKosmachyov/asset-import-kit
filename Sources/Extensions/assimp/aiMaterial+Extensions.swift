@@ -6,7 +6,7 @@
 //  Copyright © 2018 Eugene Bokhan. All rights reserved.
 //
 
-import Assimp.material
+import Assimp
 
 extension aiMaterial {
     

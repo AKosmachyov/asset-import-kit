@@ -40,6 +40,27 @@ do {
 }
 ```
 
+## Build Assimp
+
+1. Clone [Assimp](https://github.com/assimp/assimp)
+2. Use instructions from `./port/iOS/README.md` file
+3. Build XCFramework with `Assimp` name
+    1. Replace `module libassimp {` with `module Assimp {` inside `include/assimp/module.modulemap` file
+    2. Rename static libraries
+
+    ```bash
+    mv ../../lib/iOS/arm64/libassimp.a ../../lib/iOS/arm64/Assimp.a
+    mv ../../lib/iOS/x86_64/libassimp.a ../../lib/iOS/x86_64/Assimp.a
+    ```
+    3. Build XCFramework
+    
+    ```bash
+    xcodebuild -create-xcframework \
+    -library ../../lib/iOS/arm64/Assimp.a -headers ../../include \
+    -library ../../lib/iOS/x86_64/Assimp.a -headers ../../include \
+    -output Assimp.xcframework
+    ```
+
 ## License
 
 [AssetImportKit's license](LICENSE) is based on 3-clause BSD-License.

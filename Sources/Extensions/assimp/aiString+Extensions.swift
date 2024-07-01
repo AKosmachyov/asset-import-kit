@@ -7,6 +7,7 @@
 //
 
 import Assimp
+import Foundation
 
 func tupleOfInt8sToString( _ tupleOfInt8s: Any) -> NSString {
     var result = ""
