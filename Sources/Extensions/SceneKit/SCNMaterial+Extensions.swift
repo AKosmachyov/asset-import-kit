@@ -123,6 +123,21 @@ extension SCNMaterial {
                                 aiScene: aiScene,
                                 path: String,
                                 imageCache: AssimpImageCache) {
+        // Assimp already normalizes FBX transparency to $mat.opacity.
+        // Keep the scalar separate from texture alpha; applying the transparent
+        // color as well would count the same FBX transparency twice.
+        var opacity: Float = 1
+        var count: UInt32 = 1
+        let result = aiGetMaterialFloatArray(aiMaterial,
+                                             AI_MATKEY_OPACITY.pKey,
+                                             AI_MATKEY_OPACITY.type,
+                                             AI_MATKEY_OPACITY.index,
+                                             &opacity,
+                                             &count)
+        if result == aiReturn_SUCCESS, count == 1, opacity.isFinite {
+            self.transparency = CGFloat(min(max(opacity, 0), 1))
+        }
+
         let textureTypeTuple = [(value: aiTextureType_DIFFUSE,
                                  description: "Diffuse"),
                                 (value: aiTextureType_SPECULAR,
