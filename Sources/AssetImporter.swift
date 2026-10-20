@@ -615,9 +615,13 @@ public class AssetImporter {
             debugPrint("Animation data for animation at index: \(i)")
             if let aiAnimationPointer = aiScene.mAnimations[Int(i)] {
                 let aiAnimation = aiAnimationPointer.pointee
+
+                let originalAnimationName = aiAnimation.mName.stringValue()
                 let animIndex = "-" + "\(i + 1)"
-                let animName = (((((path as NSString).lastPathComponent) as NSString).deletingPathExtension) as NSString).appending(animIndex)
-                debugPrint("Generated animation name: \(animName)")
+                let animName = originalAnimationName.isEmpty
+                ? (((((path as NSString).lastPathComponent) as NSString).deletingPathExtension) as NSString).appending(animIndex)
+                : originalAnimationName
+
                 let currentAnimation = NSMutableDictionary()
                 debugPrint("This animation \(animName) has \(aiAnimation.mNumChannels) channels with duration \(aiAnimation.mDuration) ticks per sec: \(aiAnimation.mTicksPerSecond)")
                 var duration: Double
